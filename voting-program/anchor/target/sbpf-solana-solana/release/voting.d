@@ -1,0 +1,1 @@
+/mnt/c/Users/sonal/OneDrive/Desktop/SmartContracts/voting-program/anchor/target/sbpf-solana-solana/release/voting.so: /mnt/c/Users/sonal/OneDrive/Desktop/SmartContracts/voting-program/anchor/programs/voting/src/lib.rs
