@@ -13,17 +13,23 @@ const votingAddress = new PublicKey("FqzkXZdwYjurnUKetJCAvaUw5WAqbwzU6gZEwydeEfq
 
 describe('Voting', () => {
 
-  it('Initialize Poll', async () => {
-    const context = await startAnchor("", [{ name: "voting", programId: votingAddress }], []);
+  let context;
+  let provider;
+  let votingProgram;
 
-    const provider = new BankrunProvider(context);
+  beforeAll(async () => {
+    context = await startAnchor("", [{ name: "voting", programId: votingAddress }], []);
 
-    const votingProgram = new Program<Voting>(
+    provider = new BankrunProvider(context);
+
+    votingProgram = new Program<Voting>(
       IDL,
       provider,
     );
+  })
 
-    await votingProgram.methods.initilalizePoll(
+  it('Initialize Poll', async () => {
+    await votingProgram.methods.initializePoll(
       new anchor.BN(1),
       "What is you fav color?",
       new anchor.BN(0),
@@ -31,7 +37,7 @@ describe('Voting', () => {
     ).rpc()
 
     const [pollAddress] = PublicKey.findProgramAddressSync(
-      [new anchor.BN(1).toArrayLike(Buffer,'le',8)],
+      [new anchor.BN(1).toArrayLike(Buffer, 'le', 8)],
       votingAddress
     )
 
@@ -42,4 +48,57 @@ describe('Voting', () => {
     expect(poll.pollStart.toNumber()).toBeLessThan(poll.pollEnd.toNumber())
   })
 
+  it("Initilize_candidate", async () => {
+    await votingProgram.methods.initializeCandidate(
+      "Yellow",
+      new anchor.BN(1),
+    ).rpc();
+    await votingProgram.methods.initializeCandidate(
+      "Green",
+      new anchor.BN(1),
+    ).rpc();
+
+    const [yellowAddress] = PublicKey.findProgramAddressSync(
+      [new anchor.BN(1).toArrayLike(Buffer, "le", 8), Buffer.from("Yellow")],
+      votingAddress
+    )
+    const yellowCnadidate = await votingProgram.account.candidate.fetch(yellowAddress)
+    console.log(yellowCnadidate)
+
+    expect(yellowCnadidate.candidateVotes.toNumber()).toEqual(0);
+
+    const [greenAddress] = PublicKey.findProgramAddressSync(
+      [new anchor.BN(1).toArrayLike(Buffer, "le", 8), Buffer.from("Green")],
+      votingAddress
+    )
+    const greenCnadidate = await votingProgram.account.candidate.fetch(greenAddress)
+    console.log(greenCnadidate)
+    expect(greenCnadidate.candidateVotes.toNumber()).toEqual(0);
+
+
+
+  })
+ it("vote", async () => {
+  const pollId = new anchor.BN(1);
+
+  const [pollAddress] = PublicKey.findProgramAddressSync(
+    [pollId.toArrayLike(Buffer, "le", 8)],
+    votingAddress
+  );
+
+  const [yellowAddress] = PublicKey.findProgramAddressSync(
+    [pollId.toArrayLike(Buffer, "le", 8), Buffer.from("Yellow")],
+    votingAddress
+  );
+
+  await votingProgram.methods
+    .vote( "Yellow",
+      new anchor.BN(1),)
+
+    .rpc();
+
+  // ✅ check updated votes
+  const yellowCandidate = await votingProgram.account.candidate.fetch(yellowAddress);
+  expect(yellowCandidate.candidateVotes.toNumber()).toBe(1);
+});
 })

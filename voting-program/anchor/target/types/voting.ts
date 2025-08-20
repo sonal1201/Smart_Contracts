@@ -14,16 +14,16 @@ export type Voting = {
   },
   "instructions": [
     {
-      "name": "initilalizeCandidate",
+      "name": "initializeCandidate",
       "discriminator": [
-        88,
-        21,
-        181,
-        60,
-        123,
-        57,
-        224,
-        203
+        210,
+        107,
+        118,
+        204,
+        255,
+        97,
+        112,
+        26
       ],
       "accounts": [
         {
@@ -75,16 +75,16 @@ export type Voting = {
       ]
     },
     {
-      "name": "initilalizePoll",
+      "name": "initializePoll",
       "discriminator": [
-        190,
-        159,
-        235,
-        233,
-        93,
-        15,
-        195,
-        118
+        193,
+        22,
+        99,
+        197,
+        18,
+        33,
+        115,
+        117
       ],
       "accounts": [
         {
@@ -125,6 +125,59 @@ export type Voting = {
         {
           "name": "pollEnd",
           "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "vote",
+      "discriminator": [
+        227,
+        110,
+        155,
+        23,
+        136,
+        126,
+        172,
+        25
+      ],
+      "accounts": [
+        {
+          "name": "signer",
+          "signer": true
+        },
+        {
+          "name": "poll",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "arg",
+                "path": "pollId"
+              }
+            ]
+          }
+        },
+        {
+          "name": "candidate",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "arg",
+                "path": "pollId"
+              },
+              {
+                "kind": "arg",
+                "path": "candidateName"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "candidateName",
+          "type": "string"
         }
       ]
     }

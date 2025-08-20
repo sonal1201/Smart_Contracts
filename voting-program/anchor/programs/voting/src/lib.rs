@@ -1,3 +1,5 @@
+use core::str;
+
 use anchor_lang::prelude::*;
 
 declare_id!("FqzkXZdwYjurnUKetJCAvaUw5WAqbwzU6gZEwydeEfqS");
@@ -7,8 +9,8 @@ pub mod voting {
     use super::*;
 
     // INSTRCUTION
-    pub fn initilalize_poll(
-        ctx: Context<InitilalizePoll>,
+    pub fn initialize_poll(
+        ctx: Context<InitializePoll>,
         poll_id: i64,
         description: String,
         poll_start: u64,
@@ -23,19 +25,50 @@ pub mod voting {
         Ok(())
     }
 
-    pub fn initilalize_candidate(
-        ctx: Context<InitilalizeCandidate>,
+    pub fn initialize_candidate(
+        ctx: Context<InitializeCandidate>,
         candidate_name: String,
-        poll_id: u64,
+        _poll_id: u64,
     ) -> Result<()> {
+        let candidate = &mut ctx.accounts.candidate;
+        let poll = &mut ctx.accounts.poll;
+        poll.candidates_account += 1;
+        candidate.candidate_name = candidate_name;
+        candidate.candidate_votes = 0;
         Ok(())
     }
+
+    pub fn vote(ctx: Context<Vote>, _candidate_name: String) -> Result<()> {
+        let candidate = &mut ctx.accounts.candidate;
+        candidate.candidate_votes += 1;
+        Ok(())
+    }
+}
+
+#[derive(Accounts)]
+#[instruction[candidate_name:String,poll_id:i64]]
+pub struct Vote<'info>{
+    pub signer: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [poll_id.to_le_bytes().as_ref()],
+        bump
+    )]
+    pub poll: Account<'info, Poll>,
+
+    #[account(
+        mut,
+        seeds = [poll_id.to_le_bytes().as_ref(),candidate_name.as_bytes()],
+        bump
+    )]
+    pub candidate: Account<'info, Candidate>,
 
 }
 
 #[derive(Accounts)]
 #[instruction[candidate_name:String,poll_id:i64]]
-pub struct InitilalizeCandidate<'info> {
+pub struct InitializeCandidate<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
 
@@ -67,7 +100,7 @@ pub struct Candidate {
 
 #[derive(Accounts)]
 #[instruction(poll_id: i64)]
-pub struct InitilalizePoll<'info> {
+pub struct InitializePoll<'info> {
     #[account(mut)]
     pub signer: Signer<'info>,
     #[account(
